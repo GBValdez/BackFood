@@ -32,7 +32,7 @@ namespace project.utils
         }
 
         [HttpGet()]
-        public virtual async Task<ActionResult<resPag<TDto>>> get([FromQuery] int pageSize, [FromQuery] int pageNumber, [FromQuery] TQuery queryParams, [FromQuery] Boolean? all = false)
+        public virtual async Task<ActionResult<resPag<TDto>>> get([FromQuery] int pageSize, [FromQuery] int pageNumber, [FromQuery] TQuery queryParams, [FromQuery] Boolean? all = true)
         {
             IQueryable<TEntity> query = context.Set<TEntity>();
             if (!showDeleted)

@@ -1,4 +1,8 @@
 using AutoMapper;
+using Nuevo.modules.foods;
+using Nuevo.modules.orders.dto;
+using project.modules.foods;
+using project.modules.orders.models;
 using project.roles;
 using project.roles.dto;
 using project.users;
@@ -17,6 +21,12 @@ namespace project.utils.autoMapper
             CreateMap<rolEntity, rolDto>();
             CreateMap<rolCreationDto, rolEntity>();
 
+            //Extras
+            CreateMap<Food, foodDto>();
+            CreateMap<foodDto, Food>();
+
+            CreateMap<orderDto, Order>();
+            CreateMap<orderItemCreationDto, orderItem>();
         }
 
     }

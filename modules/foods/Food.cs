@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using project.modules.orders.models;
 using project.utils;
 
 namespace project.modules.foods
 {
-    public class Food : CommonsModel<ulong>
+    public class Food : CommonsModel<int>
     {
         public string name { get; set; } = null!;
         public float price { get; set; } = 0;
@@ -16,5 +17,7 @@ namespace project.modules.foods
         public string imageUrl { get; set; } = null!;
         public List<string> origins { get; set; } = new List<string>();
         public string cookTime { get; set; } = null!;
+
+        public List<orderItem> OrderItems { get; set; } = new List<orderItem>();
     }
 }

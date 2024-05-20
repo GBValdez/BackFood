@@ -7,6 +7,8 @@ namespace project.users
     {
         public string? userUpdateId { get; set; }
         public DateTime? deleteAt { get; set; }
-        public userEntity userUpdate { get; set; }
+        public userEntity? userUpdate { get; set; }
+        public DateTime? updateAt { get; set; }
+        public string address { get; set; } = null!;
     }
 }

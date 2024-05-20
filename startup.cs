@@ -45,6 +45,7 @@ namespace project
                 {
                     options.UseNpgsql(Configuration.GetConnectionString("PostSqlConnection"))
                     .AddInterceptors(serviceProvider.GetRequiredService<interceptorDb>());
+                    options.EnableSensitiveDataLogging();
                 }
                 );
 

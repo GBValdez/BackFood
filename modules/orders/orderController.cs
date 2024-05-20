@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Nuevo.modules.orders.dto;
 using project.modules.orders.dto;
 using project.modules.orders.models;
 using project.utils;
@@ -13,17 +17,21 @@ using project.utils;
 namespace Nuevo.modules.orders
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/orders")]
     public class orderController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
-        public orderController(ApplicationDBContext context)
+        private readonly IMapper _mapper;
+        public orderController(ApplicationDBContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
+
         [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] Order requestOrder)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> Create([FromBody] orderDto requestOrder)
         {
             if (requestOrder.Items.Count <= 0)
             {
@@ -40,17 +48,9 @@ namespace Nuevo.modules.orders
                 .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)
                 .ForEachAsync(o => _context.Orders.Remove(o));
 
-            var newOrder = new Order
-            {
-                userUpdateId = idUser,
-                Name = requestOrder.Name,
-                Address = requestOrder.Address,
-                AddressLatLng = requestOrder.AddressLatLng,
-                PaymentId = requestOrder.PaymentId,
-                TotalPrice = requestOrder.TotalPrice,
-                Items = requestOrder.Items,
-                Status = OrderStatus.NEW
-            };
+            Order newOrder = _mapper.Map<Order>(requestOrder);
+            newOrder.userUpdateId = idUser;
+            newOrder.Status = OrderStatus.NEW;
 
             _context.Orders.Add(newOrder);
             await _context.SaveChangesAsync();
@@ -59,22 +59,18 @@ namespace Nuevo.modules.orders
         }
 
         [HttpGet("newOrderForCurrentUser")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> GetNewOrderForCurrentUser()
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-
-            if (userId == null)
-            {
-                return BadRequest("User Not Found!");
-            }
+            string idUser = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
             var order = await _context.Orders
-                .Where(o => o.userUpdateId == userId && o.Status == OrderStatus.NEW)
+                .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)
                 .FirstOrDefaultAsync();
 
             if (order == null)
             {
-                return BadRequest();
+                return NotFound("Order Not Found!");
             }
 
             return Ok(order);
@@ -83,15 +79,10 @@ namespace Nuevo.modules.orders
         [HttpPost("pay")]
         public async Task<IActionResult> Pay([FromBody] paymentReq paymentRequest)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-
-            if (userId == null)
-            {
-                return NotFound("User Not Found!");
-            }
+            string idUser = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
             var order = await _context.Orders
-                .Where(o => o.userUpdateId == userId && o.Status == OrderStatus.NEW)
+                .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)
                 .FirstOrDefaultAsync();
 
             if (order == null)
@@ -108,9 +99,12 @@ namespace Nuevo.modules.orders
         }
 
         [HttpGet("track/{id}")]
-        public async Task<IActionResult> Track(Guid id)
+        public async Task<IActionResult> Track(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.Include(o => o.AddressLatLng)
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Food)
+            .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
             {

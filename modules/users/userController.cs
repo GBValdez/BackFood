@@ -18,10 +18,10 @@ using project.utils.services;
 namespace project.users
 {
     [ApiController]
-    [Route("user")]
+    [Route("api/users")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
-    public class userController : controllerCommons<userEntity, userUpdateDto, userDto, userQueryDto, object, string>
+    public class userController : ControllerBase
     {
         //Esto nos va servir para crear nuevos usuarios 
         private readonly UserManager<userEntity> userManager;
@@ -30,102 +30,38 @@ namespace project.users
         private readonly SignInManager<userEntity> signManager;
         private readonly emailService emailService;
         private readonly IDataProtector dataProtector;
-        protected override bool showDeleted { get; set; } = true;
-        public userController(UserManager<userEntity> userManager, IConfiguration configuration, SignInManager<userEntity> signManager, emailService emailService, IDataProtectionProvider dataProvider, ApplicationDBContext contex, IMapper mapper) : base(contex, mapper)
+        private readonly IMapper mapper;
+
+        public userController(UserManager<userEntity> userManager, IConfiguration configuration, SignInManager<userEntity> signManager, emailService emailService, IDataProtectionProvider dataProtectionProvider, IMapper mapper)
         {
             this.userManager = userManager;
             this.configuration = configuration;
             this.signManager = signManager;
             this.emailService = emailService;
-            this.dataProtector = dataProvider.CreateProtector(configuration["keyResetPasswordKey"]);
-
-        }
-        public override async Task<ActionResult> put(userUpdateDto user, [FromRoute] string id, [FromQuery] object queryCreation)
-        {
-            userEntity userDB = await userManager.FindByNameAsync(id);
-
-            if (user.status)
-            {
-                userDB.deleteAt = null;
-            }
-            else if (userDB.deleteAt == null)
-            {
-                userDB.deleteAt = DateTime.Now.ToUniversalTime();
-            }
-            await userManager.UpdateAsync(userDB);
-
-
-            if (userDB == null)
-                return NotFound();
-            IList<string> rolesCurrent = await userManager.GetRolesAsync(userDB);
-            IList<string> rolesAdd = user.roles.Except(rolesCurrent).ToList();
-            IList<string> rolesRemove = rolesCurrent.Except(user.roles).ToList();
-            if (rolesRemove.Count != 0)
-            {
-                IdentityResult resultRemove = await userManager.RemoveFromRolesAsync(userDB, rolesRemove);
-                if (!resultRemove.Succeeded)
-                    return BadRequest(resultRemove.Errors);
-            }
-
-            if (rolesAdd.Count != 0)
-            {
-                IdentityResult resultAdd = await userManager.AddToRolesAsync(userDB, rolesAdd);
-                if (!resultAdd.Succeeded)
-                    return BadRequest(resultAdd.Errors);
-            }
-
-            return NoContent();
+            this.dataProtector = dataProtectionProvider.CreateProtector("emailConfirmation");
+            this.mapper = mapper;
         }
 
-
-        [HttpGet("{userName}")]
-        public async Task<ActionResult<userDto>> getByUserName(string userName)
-        {
-            userEntity user = await userManager.FindByNameAsync(userName);
-            if (user == null)
-                return NotFound();
-            IList<string> roles = await userManager.GetRolesAsync(user);
-            userDto userDto = mapper.Map<userDto>(user);
-            userDto.roles = roles.ToList();
-            return userDto;
-        }
-
-        public override async Task<ActionResult> delete(string id)
-        {
-            userEntity user = await userManager.FindByNameAsync(id);
-            if (user == null)
-                return NotFound();
-            user.deleteAt = DateTime.Now.ToUniversalTime();
-            await userManager.UpdateAsync(user);
-            return NoContent();
-        }
 
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<ActionResult> register(userCreationDto credentials)
+        public async Task<ActionResult<userDto>> register(userCreationDto credentials)
         {
             if (await userManager.FindByEmailAsync(credentials.email) != null)
                 return BadRequest(new errorMessageDto("El correo ya esta en uso"));
             if (await userManager.FindByNameAsync(credentials.userName) != null)
                 return BadRequest(new errorMessageDto("El Nombre de usuario ya esta en uso"));
-            userEntity user = new userEntity() { UserName = credentials.userName, Email = credentials.email };
+            userEntity user = new userEntity() { UserName = credentials.userName, Email = credentials.email, address = credentials.address };
 
             IdentityResult result = await userManager.CreateAsync(user, credentials.password);
             if (result.Succeeded)
             {
-                IList<string> roles = new List<string> { "userNormal", "ADMINISTRATOR" };
-                await userManager.AddToRolesAsync(user, roles);
-
-                string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-                emailService.SendEmail(new emailSendDto
-                {
-                    email = credentials.email,
-                    subject = "Confirmacion de correo",
-                    message = $"<h1>Correo de confirmación BookMaster</h1> <a href='{configuration["FrontUrl"]}/user/confirmEmail?email={credentials.email}&token={encodedToken}'>Confirmar correo</a>"
-                });
-                return Ok();
+                credentialsDto credentialsPassword = new credentialsDto() { email = user.Email, password = credentials.password };
+                authenticationDto token = await createToken(credentialsPassword);
+                userDto resUserDto = mapper.Map<userDto>(user);
+                resUserDto.token = token.token;
+                return resUserDto;
             }
             else
             {
@@ -133,101 +69,14 @@ namespace project.users
             }
         }
 
-        protected override async Task<IQueryable<userEntity>> modifyGet(IQueryable<userEntity> query, userQueryDto queryParam)
-        {
-
-            if (queryParam.roles != null)
-            {
-                List<string> userWithRoles = await context.UserRoles
-                    .Where(userRole => queryParam.roles.Contains(userRole.RoleId))
-                    .Select(userRole => userRole.UserId)
-                    .ToListAsync();
-                query = query.Where(userDB => userWithRoles.Contains(userDB.Id));
-            }
-            if (queryParam.isActive.HasValue)
-            {
-                if (queryParam.isActive.Value)
-                    query = query.Where(userDB => userDB.deleteAt == null);
-                else
-                    query = query.Where(userDB => userDB.deleteAt != null);
-            }
-            return query;
-        }
-
-        [HttpPost("forgotPassword")]
-        [AllowAnonymous]
-        public async Task<ActionResult> forgotPassword([FromBody] emailDto email)
-        {
-            userEntity user = await userManager.FindByEmailAsync(email.email);
-
-            if (user == null)
-                NoContent();
-
-            if (await userManager.IsEmailConfirmedAsync(user) == false)
-                NoContent();
-
-            if (user.deleteAt != null)
-                NoContent();
-
-            string token = await userManager.GeneratePasswordResetTokenAsync(user);
-            string emailEncrypt = dataProtector.Protect(email.email);
-            string tokenEncrypt = dataProtector.Protect(token);
-            string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(tokenEncrypt));
-
-            emailService.SendEmail(new emailSendDto
-            {
-                email = email.email,
-                subject = "Recuperar contraseña BookMaster",
-                message = $"<h1>Recuperar contraseña</h1> <a href='{configuration["FrontUrl"]}/user/resetPassword/{emailEncrypt}/{encodedToken}'>Recuperar contraseña</a>"
-            });
-            return NoContent();
-        }
-
-        [HttpPost("resetPassword")]
-        [AllowAnonymous]
-        public async Task<ActionResult> resetPassword([FromBody] resetPasswordDto resetPassword)
-        {
-            string email = dataProtector.Unprotect(resetPassword.email);
-            userEntity user = await userManager.FindByEmailAsync(email);
-            if (user == null)
-                return BadRequest(new errorMessageDto("El enlace para restablecer la contraseña es inválido o ha expirado."));
-            byte[] decodedToken = WebEncoders.Base64UrlDecode(resetPassword.token);
-            string normalToken = Encoding.UTF8.GetString(decodedToken);
-            string tokenDescrypted = dataProtector.Unprotect(normalToken);
-            IdentityResult result = await userManager.ResetPasswordAsync(user, tokenDescrypted, resetPassword.password);
-            if (result.Succeeded)
-                return Ok();
-            else
-                return BadRequest(result.Errors);
-        }
-
-
-        [HttpGet("confirmEmail")]
-        [AllowAnonymous]
-        public async Task<ActionResult> confirmEmail([FromQuery] string email, [FromQuery] string token)
-        {
-            userEntity user = await userManager.FindByEmailAsync(email);
-            if (user == null)
-                return BadRequest("Usuario no encontrado");
-            byte[] decodedToken = WebEncoders.Base64UrlDecode(token);
-            string normalToken = Encoding.UTF8.GetString(decodedToken);
-            IdentityResult result = await userManager.ConfirmEmailAsync(user, normalToken);
-            if (result.Succeeded)
-                return Ok();
-            else
-                return BadRequest(result.Errors);
-        }
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<authenticationDto>> login(credentialsDto credentials)
+        public async Task<ActionResult<userDto>> login(credentialsDto credentials)
         {
 
             userEntity EMAIL = await userManager.FindByEmailAsync(credentials.email);
             if (EMAIL == null)
-                return BadRequest(new errorMessageDto("Credenciales invalidas"));
-
-            if (await userManager.IsEmailConfirmedAsync(EMAIL) == false)
                 return BadRequest(new errorMessageDto("Credenciales invalidas"));
 
             if (EMAIL.deleteAt != null)
@@ -235,22 +84,16 @@ namespace project.users
 
             var result = await signManager.PasswordSignInAsync(EMAIL.UserName, credentials.password, false, false);
             if (result.Succeeded)
-                return await createToken(credentials);
+            {
+                credentialsDto credentialsPassword = new credentialsDto() { email = EMAIL.Email, password = credentials.password };
+                authenticationDto token = await createToken(credentialsPassword);
+                userDto resUserDto = mapper.Map<userDto>(EMAIL);
+                resUserDto.token = token.token;
+                return resUserDto;
+            }
             else
                 return BadRequest(new errorMessageDto("Credenciales invalidas"));
         }
-
-        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        // [HttpPost("renewToken")]
-        // public async Task<ActionResult<authenticationDto>> renewToken()
-        // {
-        //     Claim email = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
-        //     credentialsDto credential = new credentialsDto
-        //     {
-        //         email = email.Value
-        //     };
-        //     return await createToken(credential);
-        // }
         private async Task<authenticationDto> createToken(credentialsDto credentials)
         {
             userEntity user = await userManager.FindByEmailAsync(credentials.email);

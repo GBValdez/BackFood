@@ -6,7 +6,7 @@ using project.utils;
 
 namespace project.modules.orders
 {
-    public class LatLng : CommonsModel<ulong>
+    public class LatLng : CommonsModel<int>
     {
         public string Lat { get; set; } = null!;
         public string Lng { get; set; } = null!;

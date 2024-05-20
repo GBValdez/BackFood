@@ -12,9 +12,9 @@ namespace project.roles
 {
     [ApiController]
     [Route("rol")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
-    public class rolController : controllerCommons<rolEntity, rolCreationDto, rolDto, rolQueryDto, object, string>
+    public class rolController : controllerCommons<rolEntity, rolCreationDto, rolDto, object, object, string>
     {
         private RoleManager<rolEntity> rolManager;
         private UserManager<userEntity> userManager;

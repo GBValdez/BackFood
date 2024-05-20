@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Nuevo.Migrations
 {
     /// <inheritdoc />
-    public partial class AMIGO : Migration
+    public partial class First_migration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,6 +20,8 @@ namespace Nuevo.Migrations
                     Id = table.Column<string>(type: "text", nullable: false),
                     userUpdateId = table.Column<string>(type: "text", nullable: true),
                     deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    address = table.Column<string>(type: "text", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -50,8 +52,9 @@ namespace Nuevo.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    userUpdateId = table.Column<string>(type: "text", nullable: false),
+                    userUpdateId = table.Column<string>(type: "text", nullable: true),
                     deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
@@ -63,8 +66,7 @@ namespace Nuevo.Migrations
                         name: "FK_AspNetRoles_AspNetUsers_userUpdateId",
                         column: x => x.userUpdateId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -132,7 +134,8 @@ namespace Nuevo.Migrations
                 name: "Foods",
                 columns: table => new
                 {
-                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "text", nullable: false),
                     price = table.Column<float>(type: "real", nullable: false),
                     tags = table.Column<List<string>>(type: "text[]", nullable: false),
@@ -141,29 +144,31 @@ namespace Nuevo.Migrations
                     imageUrl = table.Column<string>(type: "text", nullable: false),
                     origins = table.Column<List<string>>(type: "text[]", nullable: false),
                     cookTime = table.Column<string>(type: "text", nullable: false),
-                    userUpdateId = table.Column<string>(type: "text", nullable: false),
-                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    userUpdateId = table.Column<string>(type: "text", nullable: true),
+                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Foods", x => x.Id);
+                    table.PrimaryKey("PK_primary_foods", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Foods_AspNetUsers_userUpdateId",
                         column: x => x.userUpdateId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "LatLng",
                 columns: table => new
                 {
-                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Lat = table.Column<string>(type: "text", nullable: false),
                     Lng = table.Column<string>(type: "text", nullable: false),
-                    userUpdateId = table.Column<string>(type: "text", nullable: false),
-                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    userUpdateId = table.Column<string>(type: "text", nullable: true),
+                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -172,8 +177,7 @@ namespace Nuevo.Migrations
                         name: "FK_LatLng_AspNetUsers_userUpdateId",
                         column: x => x.userUpdateId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -225,15 +229,17 @@ namespace Nuevo.Migrations
                 name: "Orders",
                 columns: table => new
                 {
-                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Address = table.Column<string>(type: "text", nullable: false),
-                    AddressLatLngId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    AddressLatLngId = table.Column<int>(type: "integer", nullable: false),
                     PaymentId = table.Column<string>(type: "text", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "numeric", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    userUpdateId = table.Column<string>(type: "text", nullable: false),
-                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    userUpdateId = table.Column<string>(type: "text", nullable: true),
+                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -242,8 +248,7 @@ namespace Nuevo.Migrations
                         name: "FK_Orders_AspNetUsers_userUpdateId",
                         column: x => x.userUpdateId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_LatLng_AddressLatLngId",
                         column: x => x.AddressLatLngId,
@@ -256,13 +261,15 @@ namespace Nuevo.Migrations
                 name: "OrderItems",
                 columns: table => new
                 {
-                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    FoodId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FoodId = table.Column<int>(type: "integer", nullable: false),
+                    OrderId = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    OrderId = table.Column<decimal>(type: "numeric(20,0)", nullable: true),
-                    userUpdateId = table.Column<string>(type: "text", nullable: false),
-                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    userUpdateId = table.Column<string>(type: "text", nullable: true),
+                    deleteAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    updateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -271,8 +278,7 @@ namespace Nuevo.Migrations
                         name: "FK_OrderItems_AspNetUsers_userUpdateId",
                         column: x => x.userUpdateId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_OrderItems_Foods_FoodId",
                         column: x => x.FoodId,
@@ -283,7 +289,8 @@ namespace Nuevo.Migrations
                         name: "FK_OrderItems_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(

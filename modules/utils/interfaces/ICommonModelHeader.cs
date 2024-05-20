@@ -5,10 +5,10 @@ namespace project.utils.interfaces
 {
     public interface ICommonModelHeader
     {
-        public string userUpdateId { get; set; }
-
+        public string? userUpdateId { get; set; }
         public DateTime? deleteAt { get; set; }
-        public userEntity userUpdate { get; set; }
+        public userEntity? userUpdate { get; set; }
+        public DateTime? updateAt { get; set; }
 
     }
 }

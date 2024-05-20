@@ -13,8 +13,8 @@ using project.utils;
 namespace Nuevo.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240518043448_AMIGO")]
-    partial class AMIGO
+    [Migration("20240518163457_XD")]
+    partial class XD
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -134,9 +134,11 @@ namespace Nuevo.Migrations
 
             modelBuilder.Entity("project.modules.foods.Food", b =>
                 {
-                    b.Property<decimal>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(20,0)");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("cookTime")
                         .IsRequired()
@@ -170,11 +172,14 @@ namespace Nuevo.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
+                    b.Property<DateTime?>("updateAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("userUpdateId")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("PK_primary_foods");
 
                     b.HasIndex("userUpdateId");
 
@@ -183,9 +188,11 @@ namespace Nuevo.Migrations
 
             modelBuilder.Entity("project.modules.orders.LatLng", b =>
                 {
-                    b.Property<decimal>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(20,0)");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Lat")
                         .IsRequired()
@@ -198,8 +205,10 @@ namespace Nuevo.Migrations
                     b.Property<DateTime?>("deleteAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("updateAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("userUpdateId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -211,16 +220,18 @@ namespace Nuevo.Migrations
 
             modelBuilder.Entity("project.modules.orders.models.Order", b =>
                 {
-                    b.Property<decimal>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(20,0)");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("AddressLatLngId")
-                        .HasColumnType("numeric(20,0)");
+                    b.Property<int>("AddressLatLngId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -239,8 +250,10 @@ namespace Nuevo.Migrations
                     b.Property<DateTime?>("deleteAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("updateAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("userUpdateId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -254,15 +267,17 @@ namespace Nuevo.Migrations
 
             modelBuilder.Entity("project.modules.orders.models.orderItem", b =>
                 {
-                    b.Property<decimal>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(20,0)");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("FoodId")
-                        .HasColumnType("numeric(20,0)");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("OrderId")
-                        .HasColumnType("numeric(20,0)");
+                    b.Property<int>("FoodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
@@ -273,8 +288,10 @@ namespace Nuevo.Migrations
                     b.Property<DateTime?>("deleteAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("updateAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("userUpdateId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -308,8 +325,10 @@ namespace Nuevo.Migrations
                     b.Property<DateTime?>("deleteAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("updateAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("userUpdateId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -375,7 +394,14 @@ namespace Nuevo.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime?>("deleteAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("updateAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("userUpdateId")
@@ -450,9 +476,7 @@ namespace Nuevo.Migrations
                 {
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
-                        .HasForeignKey("userUpdateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("userUpdateId");
 
                     b.Navigation("userUpdate");
                 });
@@ -461,9 +485,7 @@ namespace Nuevo.Migrations
                 {
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
-                        .HasForeignKey("userUpdateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("userUpdateId");
 
                     b.Navigation("userUpdate");
                 });
@@ -478,9 +500,7 @@ namespace Nuevo.Migrations
 
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
-                        .HasForeignKey("userUpdateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("userUpdateId");
 
                     b.Navigation("AddressLatLng");
 
@@ -490,22 +510,24 @@ namespace Nuevo.Migrations
             modelBuilder.Entity("project.modules.orders.models.orderItem", b =>
                 {
                     b.HasOne("project.modules.foods.Food", "Food")
-                        .WithMany()
+                        .WithMany("OrderItems")
                         .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("project.modules.orders.models.Order", null)
+                    b.HasOne("project.modules.orders.models.Order", "Order")
                         .WithMany("Items")
-                        .HasForeignKey("OrderId");
-
-                    b.HasOne("project.users.userEntity", "userUpdate")
-                        .WithMany()
-                        .HasForeignKey("userUpdateId")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("project.users.userEntity", "userUpdate")
+                        .WithMany()
+                        .HasForeignKey("userUpdateId");
+
                     b.Navigation("Food");
+
+                    b.Navigation("Order");
 
                     b.Navigation("userUpdate");
                 });
@@ -514,9 +536,7 @@ namespace Nuevo.Migrations
                 {
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
-                        .HasForeignKey("userUpdateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("userUpdateId");
 
                     b.Navigation("userUpdate");
                 });
@@ -528,6 +548,11 @@ namespace Nuevo.Migrations
                         .HasForeignKey("userUpdateId");
 
                     b.Navigation("userUpdate");
+                });
+
+            modelBuilder.Entity("project.modules.foods.Food", b =>
+                {
+                    b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("project.modules.orders.models.Order", b =>
