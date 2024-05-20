@@ -53,7 +53,7 @@ namespace project
 
             services.AddCors(options =>
                 options.AddDefaultPolicy(
-                    builder => builder.WithOrigins(Configuration["FrontUrl"]).AllowAnyMethod().AllowAnyHeader())
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader())
             );
             services.AddResponseCaching();
 
