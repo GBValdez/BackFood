@@ -30,7 +30,6 @@ namespace Nuevo.modules.orders
 
 
         [HttpPost("create")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Create([FromBody] orderDto requestOrder)
         {
             if (requestOrder.Items.Count <= 0)
@@ -38,7 +37,7 @@ namespace Nuevo.modules.orders
                 return BadRequest("Cart Is Empty!");
             }
 
-            string idUser = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string idUser = requestOrder.userId;
             if (idUser == null)
             {
                 return BadRequest("User Not Found!");
@@ -51,18 +50,17 @@ namespace Nuevo.modules.orders
             Order newOrder = _mapper.Map<Order>(requestOrder);
             newOrder.userUpdateId = idUser;
             newOrder.Status = OrderStatus.NEW;
-
+            newOrder.PaymentId = Guid.NewGuid().ToString();
             _context.Orders.Add(newOrder);
             await _context.SaveChangesAsync();
 
             return Ok(newOrder);
         }
 
-        [HttpGet("newOrderForCurrentUser")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> GetNewOrderForCurrentUser()
+        [HttpGet("newOrderForCurrentUser/{userId}")]
+        public async Task<IActionResult> GetNewOrderForCurrentUser(String userId)
         {
-            string idUser = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string idUser = userId ?? "";
 
             var order = await _context.Orders
                 .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)

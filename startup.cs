@@ -56,7 +56,7 @@ namespace project
         options.AddPolicy("AllowSpecificOrigin",
             builder =>
             {
-                builder.WithOrigins("https://food-front-one.vercel.app")
+                builder.AllowAnyOrigin()
                        .AllowAnyHeader()
                        .AllowAnyMethod();
             });

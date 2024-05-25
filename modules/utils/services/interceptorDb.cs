@@ -31,7 +31,7 @@ namespace project.utils.services
             {
                 if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
                 {
-                    entry.Entity.userUpdateId = id;
+                    // entry.Entity.userUpdateId = id;
                     entry.Entity.updateAt = DateTime.Now.ToUniversalTime();
                 }
             }

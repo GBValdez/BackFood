@@ -14,5 +14,6 @@ namespace Nuevo.modules.orders.dto
         public LatLng AddressLatLng { get; set; } = null!;
         public decimal TotalPrice { get; set; }
         public List<orderItem> Items { get; set; } = new List<orderItem>();
+        public string userId { get; set; } = null!;
     }
 }
