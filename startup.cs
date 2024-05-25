@@ -53,8 +53,16 @@ namespace project
 
             services.AddCors(options =>
                 options.AddDefaultPolicy(
-                    builder => builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader().AllowCredentials())
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+
+                    }
+                                      )
             );
+
             services.AddResponseCaching();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
@@ -124,8 +132,10 @@ namespace project
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors();
-            app.UseResponseCaching();
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseResponseCaching();
 
             app.UseEndpoints(endpoints =>
             {
