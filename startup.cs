@@ -53,7 +53,7 @@ namespace project
 
             services.AddCors(options =>
                 options.AddDefaultPolicy(
-                    builder => builder.WithOrigins("https://food-front-one.vercel.app").AllowAnyMethod().AllowAnyHeader().AllowCredentials())
+                    builder => builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader().AllowCredentials())
             );
             services.AddResponseCaching();
 
