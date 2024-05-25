@@ -52,16 +52,15 @@ namespace project
 
 
             services.AddCors(options =>
-                options.AddDefaultPolicy(
-                    builder =>
-                    {
-                        builder.AllowAnyOrigin()
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-
-                    }
-                                      )
-            );
+    {
+        options.AddPolicy("AllowSpecificOrigin",
+            builder =>
+            {
+                builder.WithOrigins("https://food-front-one.vercel.app")
+                       .AllowAnyHeader()
+                       .AllowAnyMethod();
+            });
+    });
 
             services.AddResponseCaching();
 
@@ -114,24 +113,18 @@ namespace project
                 .AddEntityFrameworkStores<ApplicationDBContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddAuthorization(
-                options => options.AddPolicy("isAdmin", policy => policy.RequireClaim("isAdmin"))
-            );
             //Agregar servicios de encriptacion
             services.AddDataProtection();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseCors();
+            app.UseCors("AllowSpecificOrigin");
             app.UseAuthentication();
             app.UseAuthorization();
 
