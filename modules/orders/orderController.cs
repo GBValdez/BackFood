@@ -50,7 +50,6 @@ namespace Nuevo.modules.orders
             Order newOrder = _mapper.Map<Order>(requestOrder);
             newOrder.userUpdateId = idUser;
             newOrder.Status = OrderStatus.NEW;
-            newOrder.PaymentId = Guid.NewGuid().ToString();
             _context.Orders.Add(newOrder);
             await _context.SaveChangesAsync();
 
@@ -64,6 +63,8 @@ namespace Nuevo.modules.orders
 
             var order = await _context.Orders
                 .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Food)
                 .FirstOrDefaultAsync();
 
             if (order == null)
@@ -77,10 +78,9 @@ namespace Nuevo.modules.orders
         [HttpPost("pay")]
         public async Task<IActionResult> Pay([FromBody] paymentReq paymentRequest)
         {
-            string idUser = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
             var order = await _context.Orders
-                .Where(o => o.userUpdateId == idUser && o.Status == OrderStatus.NEW)
+                .Where(o => o.Id == paymentRequest.orderId && o.Status == OrderStatus.NEW)
                 .FirstOrDefaultAsync();
 
             if (order == null)
@@ -88,7 +88,7 @@ namespace Nuevo.modules.orders
                 return BadRequest("Order Not Found!");
             }
 
-            order.PaymentId = paymentRequest.PaymentId;
+            order.PaymentId = paymentRequest.paymentId;
             order.Status = OrderStatus.PAYED;
 
             await _context.SaveChangesAsync();
